@@ -43,12 +43,12 @@ public class ReaderService {
                 var readerMessage = new ReaderMessage(message);
                 if (jsonPathPredicate.isPresent()) {
                     try {
-                        List result = JsonPath.parse(readerMessage.value).read(jsonPathPredicate.get());
+                        List result = JsonPath.parse(readerMessage.payload).read(jsonPathPredicate.get());
                         if (result.size() > 0) {
                             messages.add(readerMessage);
                         }
                     } catch (InvalidPathException e) {
-                        log.debugf("Invalid JsonPath: %s for data: %s", readerMessage.value);
+                        log.debugf("Invalid JsonPath: %s for data: %s", readerMessage.payload);
                     }
                 } else {
                     messages.add(readerMessage);
@@ -61,7 +61,7 @@ public class ReaderService {
         return Collections.emptyList();
     }
 
-    public Optional<ReaderMessage> readStringMessage(String topicName, String messageId) {
+    public List<ReaderMessage> readStringMessage(String topicName, String messageId) {
         try (Reader<String> reader = pulsarClient.newReader(Schema.STRING)
                 .readerName(readerName)
                 .startMessageIdInclusive()
@@ -70,12 +70,12 @@ public class ReaderService {
                 .create()) {
             Message<String> message = reader.readNext();
             if (message != null) {
-                return Optional.of(new ReaderMessage(message));
+                return Collections.singletonList(new ReaderMessage(message));
             }
         } catch (IOException e) {
             log.error("Cannot create pulsar reader for topic: " + topicName);
         }
-        return Optional.empty();
+        return Collections.emptyList();
     }
 
     private MessageId getMessageId(String messageId) {

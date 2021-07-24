@@ -8,13 +8,13 @@ public class ReaderMessage {
     public final String messageId;
     public final long publishTime;
     public final String producer;
-    public final String value;
+    public final String payload;
 
     public ReaderMessage(Message<String> message) {
         messageId = message.getMessageId().toString();
         publishTime = message.getPublishTime();
         producer = message.getProducerName();
-        value = message.getValue();
+        payload = message.getValue();
     }
 
 
@@ -24,7 +24,7 @@ public class ReaderMessage {
                 .add("messageId='" + messageId + "'")
                 .add("publishTime=" + publishTime)
                 .add("producer='" + producer + "'")
-                .add("value='" + value + "'")
+                .add("payload='" + payload + "'")
                 .toString();
     }
 }

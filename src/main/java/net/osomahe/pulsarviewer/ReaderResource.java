@@ -21,11 +21,7 @@ public class ReaderResource {
             @QueryParam("jsonPathPredicate") Optional<String> jsonPathPredicate
     ) {
         if (messageId.isPresent()) {
-            Optional<ReaderMessage> message = service.readStringMessage(topicName, messageId.get());
-            if (message.isPresent()) {
-                return Response.ok(message).build();
-            }
-            return Response.status(Response.Status.NOT_FOUND).build();
+            return Response.ok(service.readStringMessage(topicName, messageId.get())).build();
         }
         return Response.ok(service.readStringMessage(topicName, jsonPathPredicate)).build();
     }
