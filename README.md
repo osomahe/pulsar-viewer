@@ -1,6 +1,6 @@
 # Pulsar Viewer
 
-This application provides simple REST api to see messages stored in Apache Pulsar topics. There is also simple html page to call that REST api..
+This application provides simple REST api to see messages stored in Apache Pulsar topics. There is also simple html page to call that REST api.
 
 REST API documentation is available [openapi.yml](openapi.yml) file.
 
