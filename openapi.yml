@@ -1,0 +1,55 @@
+---
+openapi: 3.0.3
+info:
+  title: Pulsar Viewer
+  version: "1.0"
+paths:
+  /read:
+    get:
+      parameters:
+      - name: topic
+        in: query
+        description: Topic name which messages are requested e.g. persistent://public/default/my-topic
+        schema:
+          minLength: 1
+          type: string
+          nullable: false
+      - name: jsonPathPredicate
+        in: query
+        required: false
+        description: JsonPath predicate to filter messages e.g. $[?(@.type=='order-created')]
+        schema:
+          type: string
+      - name: messageId
+        in: query
+        required: false
+        description: Used for selecting single Message by its ID.
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReaderMessage'
+components:
+  schemas:
+    ReaderMessage:
+      type: object
+      properties:
+        messageId:
+          type: string
+          description: Message ID
+        payload:
+          type: string
+          description: message data itself
+        producer:
+          type: string
+          description: name of message producer
+        publishTime:
+          format: int64
+          type: integer
+          description: epoch milliseconds
