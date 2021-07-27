@@ -1,7 +1,9 @@
-package net.osomahe.pulsarviewer;
+package net.osomahe.pulsarviewer.read.control;
 
 import com.jayway.jsonpath.InvalidPathException;
 import com.jayway.jsonpath.JsonPath;
+import net.osomahe.pulsarviewer.read.entity.PulsarReaderException;
+import net.osomahe.pulsarviewer.read.entity.ReaderMessage;
 import org.apache.pulsar.client.api.*;
 import org.apache.pulsar.client.internal.DefaultImplementation;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -56,9 +58,8 @@ public class ReaderService {
             }
             return messages;
         } catch (IOException e) {
-            log.error("Cannot create pulsar reader for topic: " + topicName);
+            throw new PulsarReaderException(topicName, e);
         }
-        return Collections.emptyList();
     }
 
     public List<ReaderMessage> readStringMessage(String topicName, String messageId) {
@@ -73,7 +74,7 @@ public class ReaderService {
                 return Collections.singletonList(new ReaderMessage(message));
             }
         } catch (IOException e) {
-            log.error("Cannot create pulsar reader for topic: " + topicName);
+            throw new PulsarReaderException(topicName, messageId, e);
         }
         return Collections.emptyList();
     }

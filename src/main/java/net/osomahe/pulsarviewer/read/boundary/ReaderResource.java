@@ -1,4 +1,6 @@
-package net.osomahe.pulsarviewer;
+package net.osomahe.pulsarviewer.read.boundary;
+
+import net.osomahe.pulsarviewer.read.control.ReaderService;
 
 import javax.inject.Inject;
 import javax.validation.constraints.NotEmpty;

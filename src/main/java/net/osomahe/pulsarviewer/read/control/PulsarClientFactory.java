@@ -1,4 +1,4 @@
-package net.osomahe.pulsarviewer;
+package net.osomahe.pulsarviewer.read.control;
 
 import io.quarkus.runtime.ShutdownEvent;
 import org.apache.pulsar.client.api.ClientBuilder;

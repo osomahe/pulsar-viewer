@@ -17,6 +17,7 @@ Environment variables:
 * **PULSAR_TLS_CERT_FILE** - not set by default, path for client certificate for TLS authorization `/pulsar/certs/pulsar-source-app.cert.pem`
 * **PULSAR_TLS_KEY_FILE** - not set by default, path for client key to certificate for TLS authorization `/pulsar/certs/pulsar-source-app.key-pk8.pem`
 * PULSAR_DEFAULT_READER - default "pulsar-viewer" name used for reader name
+* PULSAR_HEALTH_TOPIC - default "persistent://public/default/health-check" topic used for health checking of readiness probe
 
 Examples:
 ```bash
