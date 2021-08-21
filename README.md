@@ -36,6 +36,8 @@ This project was developed with support of companies [HP Tronic](http://www.hptr
 
 ## Development
 
+Build Docker image
+
 Start Apache Pulsar instance.
 ```bash
 docker run -d --rm --name pulsar --net hpt -p 6650:6650 \
@@ -47,4 +49,10 @@ Start Pulsar Source App to create some test messages.
 ```bash
 docker run -d --rm --name source-app --net hpt -p 8081:8080 \
 -e PULSAR_SERVICE_URL=pulsar://pulsar:6650 osomahe/pulsar-source-app:0.3.0
+```
+
+Manual build of Docker image, because Docker Hub stop allowing automated build for public projects.
+```bash
+docker build -t osomahe/pulsar-viewer:0.1.2 .
+docker push osomahe/pulsar-viewer:0.1.2
 ```
