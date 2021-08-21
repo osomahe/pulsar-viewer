@@ -1,6 +1,5 @@
 package net.osomahe.pulsarviewer.read.control;
 
-import com.jayway.jsonpath.InvalidPathException;
 import com.jayway.jsonpath.JsonPath;
 import net.osomahe.pulsarviewer.read.entity.PulsarReaderException;
 import net.osomahe.pulsarviewer.read.entity.ReaderMessage;
@@ -49,7 +48,7 @@ public class ReaderService {
                         if (result.size() > 0) {
                             messages.add(readerMessage);
                         }
-                    } catch (InvalidPathException e) {
+                    } catch (Exception e) {
                         log.debugf("Invalid JsonPath: %s for data: %s", readerMessage.payload);
                     }
                 } else {
