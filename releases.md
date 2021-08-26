@@ -1,7 +1,10 @@
 # Releases
 
+## 0.1.3 (2021-08-26)
+* fix issue with none schema topics
+
 ## 0.1.2 (2021-08-21)
-* fix issue when parsing invalid json via json path expression 
+* fix issue when parsing invalid json via json path expression
 
 ## 0.1.1 (2021-07-27)
 * better readiness health check with topic configuration

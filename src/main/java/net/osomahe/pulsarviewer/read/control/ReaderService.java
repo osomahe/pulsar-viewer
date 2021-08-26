@@ -3,7 +3,10 @@ package net.osomahe.pulsarviewer.read.control;
 import com.jayway.jsonpath.JsonPath;
 import net.osomahe.pulsarviewer.read.entity.PulsarReaderException;
 import net.osomahe.pulsarviewer.read.entity.ReaderMessage;
-import org.apache.pulsar.client.api.*;
+import org.apache.pulsar.client.api.Message;
+import org.apache.pulsar.client.api.MessageId;
+import org.apache.pulsar.client.api.PulsarClient;
+import org.apache.pulsar.client.api.Reader;
 import org.apache.pulsar.client.internal.DefaultImplementation;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
@@ -30,7 +33,7 @@ public class ReaderService {
 
     public List<ReaderMessage> readStringMessage(String topicName, Optional<String> jsonPathPredicate) {
 
-        try (Reader<String> reader = pulsarClient.newReader(Schema.STRING)
+        try (Reader<byte[]> reader = pulsarClient.newReader()
                 .readerName(readerName)
                 .topic(topicName)
                 .startMessageId(MessageId.earliest)
@@ -62,13 +65,13 @@ public class ReaderService {
     }
 
     public List<ReaderMessage> readStringMessage(String topicName, String messageId) {
-        try (Reader<String> reader = pulsarClient.newReader(Schema.STRING)
+        try (Reader<byte[]> reader = pulsarClient.newReader()
                 .readerName(readerName)
                 .startMessageIdInclusive()
                 .startMessageId(getMessageId(messageId))
                 .topic(topicName)
                 .create()) {
-            Message<String> message = reader.readNext();
+            Message<byte[]> message = reader.readNext();
             if (message != null) {
                 return Collections.singletonList(new ReaderMessage(message));
             }

@@ -47,8 +47,8 @@ apachepulsar/pulsar:2.8.0 bin/pulsar standalone -nfw
 
 Start Pulsar Source App to create some test messages.
 ```bash
-docker run -d --rm --name source-app --net hpt -p 8081:8080 \
--e PULSAR_SERVICE_URL=pulsar://pulsar:6650 osomahe/pulsar-source-app:0.3.0
+docker run -d --rm --name source-app --net hpt -p 8082:8080 \
+-e PULSAR_SERVICE_URL=pulsar://pulsar:6650 osomahe/pulsar-source-app:0.3.1
 ```
 
 Manual build of Docker image, because Docker Hub stop allowing automated build for public projects.
