@@ -7,6 +7,7 @@ $(document).ready(function () {
 		localStorage.setItem("topicName", data.topic)
 		localStorage.setItem("jsonPathPredicate", data.jsonPathPredicate)
 		localStorage.setItem("messageId", data.messageId)
+		localStorage.setItem("lastMins", data.lastMins)
 		$.ajax({
 			type: "GET",
 			url: "/read",
@@ -15,7 +16,7 @@ $(document).ready(function () {
 			let html = data.length === 0 ? '<tr><td colspan="4" style="text-align: center">No data found!</td></tr>' : '';
 			$.each(data, function (i, item){
 				fullData[item.messageId] = item;
-				html += '<tr onclick="showDetail(\'' + item.messageId + '\')"><td>' + item.messageId + '</td><td>' + moment(item.publishTime).format("yyyy-MM-DD HH:mm:ss") + '</td><td>' + item.producer + '</td><td>' +  item.payload.substr(0, 96) + '</td></tr>';
+				html += '<tr onclick="showDetail(\'' + item.messageId + '\')"><td>' + item.messageId + '</td><td>' + moment(item.publishTime).format("yyyy-MM-DD HH:mm:ss") + '</td><td>' + item.topic + '</td><td>' + item.producer + '</td><td>' +  item.payload.substr(0, 96) + '</td></tr>';
 			});
 			$('#tbody-events').html(html);
 			$("#btn-search").prop('disabled', false);
@@ -38,24 +39,25 @@ $(document).ready(function () {
 	if(storageMessageId && storageMessageId !== "undefined"){
 		$("#message-id").val(storageMessageId);
 	}
+	let lastMins = localStorage.getItem("lastMins");
+	if(lastMins && lastMins !== "undefined"){
+		$("#last-mins").val(lastMins);
+	}
 });
 
 function getData(){
+	let data = { topic: $("#topic-name").val() };
 	if($("#message-id").val().length > 0 && $("#message-id").val() !== 'undefined'){
-		return {
-			topic: $("#topic-name").val(),
-			messageId: $("#message-id").val()
-		}
+		data["messageId"] = $("#message-id").val();
 	}
 	if($("#json-path-predicate").val().length > 0 && $("#json-path-predicate").val() !== 'undefined'){
-		return {
-			topic: $("#topic-name").val(),
-			jsonPathPredicate: $("#json-path-predicate").val()
-		}
+		data["jsonPathPredicate"] = $("#json-path-predicate").val();
 	}
-	return {
-		topic: $("#topic-name").val()
+	if($("#last-mins").val().length > 0 && $("#last-mins").val() !== 'undefined'){
+		data["lastMins"] = $("#last-mins").val();
 	}
+
+	return data;
 }
 
 function showDetail(messageId){

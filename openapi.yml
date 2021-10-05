@@ -26,6 +26,12 @@ paths:
         description: Used for selecting single Message by its ID.
         schema:
           type: string
+      - name: lastMins
+        in: query
+        required: false
+        description: Used for filtering messegaed published in x last minutes.
+        schema:
+          type: integer
       responses:
         "200":
           description: OK
@@ -46,6 +52,9 @@ components:
         payload:
           type: string
           description: message data itself
+        topic:
+          type: string
+          description: name of topic in which message is stored
         producer:
           type: string
           description: name of message producer

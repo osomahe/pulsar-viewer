@@ -46,7 +46,7 @@ public class PulsarClientFactory {
 
             this.pulsarClient = clientBuilder.build();
         } catch (PulsarClientException e) {
-            log.error("Cannot create PulsarClient instance for service url: " + serviceUrl);
+            log.error("Cannot create PulsarClient instance for service url: " + serviceUrl, e);
         }
     }
 
@@ -62,7 +62,7 @@ public class PulsarClientFactory {
         try {
             this.pulsarClient.close();
         } catch (PulsarClientException e) {
-            e.printStackTrace();
+            log.error("Cannot close pulsar client connection", e);
         }
     }
 

@@ -16,6 +16,9 @@ Environment variables:
 * **PULSAR_TLS_TRUST_CERT** - not set by default, used for transport encryption using tLS certificate e.g. `/pulsar/certs/ca.cert.pem`
 * **PULSAR_TLS_CERT_FILE** - not set by default, path for client certificate for TLS authorization `/pulsar/certs/pulsar-source-app.cert.pem`
 * **PULSAR_TLS_KEY_FILE** - not set by default, path for client key to certificate for TLS authorization `/pulsar/certs/pulsar-source-app.key-pk8.pem`
+* PULSAR_ADMIN_SERVICE_HTTP_URL - default "http://localhost:8080" url for admin to connect to `https://pulsarhostname:8443`
+* PULSAR_ADMIN_TLS_CERT_FILE - not set by default, path for admin certificate for TLS authorization `/pulsar/certs/admin.cert.pem`
+* PULSAR_ADMIN_TLS_KEY_FILE - not set by default, path for admin key to certificate for TLS authorization `/pulsar/certs/admin.key-pk8.pem`
 * PULSAR_DEFAULT_READER - default "pulsar-viewer" name used for reader name
 * PULSAR_HEALTH_TOPIC - default "persistent://public/default/health-check" topic used for health checking of readiness probe
 
@@ -48,11 +51,11 @@ apachepulsar/pulsar:2.8.0 bin/pulsar standalone -nfw
 Start Pulsar Source App to create some test messages.
 ```bash
 docker run -d --rm --name source-app --net hpt -p 8082:8080 \
--e PULSAR_SERVICE_URL=pulsar://pulsar:6650 osomahe/pulsar-source-app:0.3.1
+-e PULSAR_SERVICE_URL=pulsar://pulsar:6650 osomahe/pulsar-source-app:0.4.0
 ```
 
 Manual build of Docker image, because Docker Hub stop allowing automated build for public projects.
 ```bash
-docker build -t osomahe/pulsar-viewer:0.1.2 .
-docker push osomahe/pulsar-viewer:0.1.2
+docker build -t osomahe/pulsar-viewer:0.2.0 .
+docker push osomahe/pulsar-viewer:0.2.0
 ```

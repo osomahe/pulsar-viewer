@@ -3,6 +3,7 @@ package net.osomahe.pulsarviewer.read.control;
 import com.jayway.jsonpath.JsonPath;
 import net.osomahe.pulsarviewer.read.entity.PulsarReaderException;
 import net.osomahe.pulsarviewer.read.entity.ReaderMessage;
+import net.osomahe.pulsarviewer.topic.boundary.TopicFacade;
 import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.client.api.PulsarClient;
@@ -19,6 +20,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class ReaderService {
@@ -31,8 +33,39 @@ public class ReaderService {
     @Inject
     PulsarClient pulsarClient;
 
-    public List<ReaderMessage> readStringMessage(String topicName, Optional<String> jsonPathPredicate) {
+    @Inject
+    TopicFacade facadeTopic;
 
+    public List<ReaderMessage> readStringMessage(String topicName, Optional<String> messageId, Optional<String> jsonPathPredicate, Optional<Integer> lastMins) {
+        List<ReaderMessage> messages = new ArrayList<>();
+        List<String> topics;
+        if (topicName.endsWith("*")) {
+            topics = facadeTopic.getTopics(topicName);
+        } else {
+            topics = Collections.singletonList(topicName);
+        }
+        for (String topic : topics) {
+            messages.addAll(readSingleTopicMessages(topic, messageId, jsonPathPredicate));
+        }
+
+        if (lastMins.isPresent()) {
+            long lastTime = System.currentTimeMillis() - (lastMins.get() * 60 * 1_000);
+            messages = messages.stream().filter(msg -> msg.publishTime > lastTime).collect(Collectors.toList());
+        }
+
+        Collections.sort(messages);
+        Collections.reverse(messages);
+        return messages;
+    }
+
+    private List<ReaderMessage> readSingleTopicMessages(String topicName, Optional<String> messageId, Optional<String> jsonPathPredicate) {
+        if (messageId.isPresent()) {
+            return readSingleTopicMessages(topicName, messageId.get());
+        }
+        return readSingleTopicMessages(topicName, jsonPathPredicate);
+    }
+
+    private List<ReaderMessage> readSingleTopicMessages(String topicName, Optional<String> jsonPathPredicate) {
         try (Reader<byte[]> reader = pulsarClient.newReader()
                 .readerName(readerName)
                 .topic(topicName)
@@ -64,26 +97,37 @@ public class ReaderService {
         }
     }
 
-    public List<ReaderMessage> readStringMessage(String topicName, String messageId) {
-        try (Reader<byte[]> reader = pulsarClient.newReader()
-                .readerName(readerName)
-                .startMessageIdInclusive()
-                .startMessageId(getMessageId(messageId))
-                .topic(topicName)
-                .create()) {
-            Message<byte[]> message = reader.readNext();
-            if (message != null) {
-                return Collections.singletonList(new ReaderMessage(message));
+    private List<ReaderMessage> readSingleTopicMessages(String topicName, String messageId) {
+        Optional<MessageId> oMessageId = getMessageId(messageId);
+        if (oMessageId.isPresent()) {
+            try (Reader<byte[]> reader = pulsarClient.newReader()
+                    .readerName(readerName)
+                    .startMessageIdInclusive()
+                    .startMessageId(oMessageId.get())
+                    .topic(topicName)
+                    .create()) {
+                Message<byte[]> message = reader.readNext();
+                if (message != null) {
+                    ReaderMessage readerMessage = new ReaderMessage(message);
+                    if (messageId.equals(readerMessage.messageId)) {
+                        return Collections.singletonList(readerMessage);
+                    }
+                }
+            } catch (IOException e) {
+                throw new PulsarReaderException(topicName, messageId, e);
             }
-        } catch (IOException e) {
-            throw new PulsarReaderException(topicName, messageId, e);
         }
         return Collections.emptyList();
     }
 
-    private MessageId getMessageId(String messageId) {
-        String[] parts = messageId.split(":");
-        return DefaultImplementation.newMessageId(
-                Long.parseLong(parts[0]), Long.parseLong(parts[1]), Integer.parseInt(parts[2]));
+    private Optional<MessageId> getMessageId(String messageId) {
+        try {
+            String[] parts = messageId.split(":");
+            return Optional.ofNullable(DefaultImplementation.newMessageId(
+                    Long.parseLong(parts[0]), Long.parseLong(parts[1]), Integer.parseInt(parts[2])));
+        } catch (Exception e) {
+            log.error("Cannot parse message ID: " + messageId, e);
+        }
+        return Optional.empty();
     }
 }

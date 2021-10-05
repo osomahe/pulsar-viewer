@@ -8,7 +8,7 @@
 	<link href='https://fonts.googleapis.com/css?family=Roboto:400,100,300,700' rel='stylesheet' type='text/css'>
 
 	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
-	
+
 	<link rel="stylesheet" href="css/style.css">
 
 	</head>
@@ -29,9 +29,13 @@
 				  <label for="json-path-predicate" class="form-label">JsonPath predicate</label>
 				  <input type="text" class="form-control" id="json-path-predicate" placeholder="$[?(@.type=='order-created')]">
 				</div>
-				<div class="col-md-2">
+				<div class="col-md-1">
 				  <label for="message-id" class="form-label">MessageId</label>
 				  <input type="text" class="form-control" id="message-id" placeholder="6:2:-1:0">
+				</div>
+				<div class="col-md-1">
+				  <label for="message-id" class="form-label">Last(mins)</label>
+				  <input type="text" class="form-control" id="last-mins" placeholder="30">
 				</div>
 				<div class="col-md-1 mt-3">
 					<button type="submit" class="btn btn-primary" id="btn-search">Search</button>
@@ -45,7 +49,8 @@
 						    <tr>
 						      <th>MessageId</th>
 						      <th>Time</th>
-						      <th>Producer</th>
+							  <th>Topic</th>
+							  <th>Producer</th>
 						      <th>Payload</th>
 						    </tr>
 						  </thead>
