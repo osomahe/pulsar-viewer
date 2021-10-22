@@ -1,7 +1,6 @@
 package net.osomahe.pulsarviewer.topic.boundary;
 
 import org.apache.pulsar.client.admin.PulsarAdmin;
-import org.apache.pulsar.client.admin.PulsarAdminException;
 import org.jboss.logging.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -28,7 +27,7 @@ public class TopicFacade {
                     .stream()
                     .filter(topic -> topic.toLowerCase().startsWith(topicPrefix))
                     .collect(Collectors.toList());
-        } catch (PulsarAdminException e) {
+        } catch (Exception e) {
             log.error("Finding topics for pattern failed. pattern = " + pattern, e);
         }
         return Collections.emptyList();

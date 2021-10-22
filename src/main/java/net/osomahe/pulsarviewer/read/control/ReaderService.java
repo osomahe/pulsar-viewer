@@ -20,7 +20,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class ReaderService {
@@ -37,6 +36,7 @@ public class ReaderService {
     TopicFacade facadeTopic;
 
     public List<ReaderMessage> readStringMessage(String topicName, Optional<String> messageId, Optional<String> jsonPathPredicate, Optional<Integer> lastMins) {
+        log.info(String.format("Reading messages from topic[%s], messageId[%s], jsonPredicate[%s], lastMins[%s]", topicName, messageId, jsonPathPredicate, lastMins));
         List<ReaderMessage> messages = new ArrayList<>();
         List<String> topics;
         if (topicName.endsWith("*")) {
@@ -44,28 +44,26 @@ public class ReaderService {
         } else {
             topics = Collections.singletonList(topicName);
         }
+        log.info("Reading messages from " + topics.size() + " topics");
+        Optional<Long> minTimeMillis = lastMins.isPresent() ? Optional.of(System.currentTimeMillis() - (lastMins.get() * 60 * 1_000)) : Optional.empty();
         for (String topic : topics) {
-            messages.addAll(readSingleTopicMessages(topic, messageId, jsonPathPredicate));
+            messages.addAll(readSingleTopicMessages(topic, messageId, jsonPathPredicate, minTimeMillis));
         }
 
-        if (lastMins.isPresent()) {
-            long lastTime = System.currentTimeMillis() - (lastMins.get() * 60 * 1_000);
-            messages = messages.stream().filter(msg -> msg.publishTime > lastTime).collect(Collectors.toList());
-        }
-
+        log.info("Reading messages complete");
         Collections.sort(messages);
         Collections.reverse(messages);
         return messages;
     }
 
-    private List<ReaderMessage> readSingleTopicMessages(String topicName, Optional<String> messageId, Optional<String> jsonPathPredicate) {
+    private List<ReaderMessage> readSingleTopicMessages(String topicName, Optional<String> messageId, Optional<String> jsonPathPredicate, Optional<Long> minTimeMillis) {
         if (messageId.isPresent()) {
             return readSingleTopicMessages(topicName, messageId.get());
         }
-        return readSingleTopicMessages(topicName, jsonPathPredicate);
+        return readSingleTopicMessages(topicName, jsonPathPredicate, minTimeMillis);
     }
 
-    private List<ReaderMessage> readSingleTopicMessages(String topicName, Optional<String> jsonPathPredicate) {
+    private List<ReaderMessage> readSingleTopicMessages(String topicName, Optional<String> jsonPathPredicate, Optional<Long> minTimeMillis) {
         try (Reader<byte[]> reader = pulsarClient.newReader()
                 .readerName(readerName)
                 .topic(topicName)
@@ -78,6 +76,9 @@ public class ReaderService {
                     break;
                 }
                 var readerMessage = new ReaderMessage(message);
+                if (minTimeMillis.isPresent() && readerMessage.publishTime < minTimeMillis.get()) {
+                    continue;
+                }
                 if (jsonPathPredicate.isPresent()) {
                     try {
                         List result = JsonPath.parse(readerMessage.payload).read(jsonPathPredicate.get());
