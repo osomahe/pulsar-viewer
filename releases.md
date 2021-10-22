@@ -1,5 +1,8 @@
 # Releases
 
+## 0.2.1 (2021-10-22)
+* fix logging when using pulsar admin
+
 ## 0.2.0 (2021-10-05)
 * filtering by topic pattern (possibility to add * at the end)
 * selecting messages published within last x minutes

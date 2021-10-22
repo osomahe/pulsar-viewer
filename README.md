@@ -56,6 +56,6 @@ docker run -d --rm --name source-app --net hpt -p 8082:8080 \
 
 Manual build of Docker image, because Docker Hub stop allowing automated build for public projects.
 ```bash
-docker build -t osomahe/pulsar-viewer:0.2.0 .
-docker push osomahe/pulsar-viewer:0.2.0
+docker build -t osomahe/pulsar-viewer:0.2.1 .
+docker push osomahe/pulsar-viewer:0.2.1
 ```
