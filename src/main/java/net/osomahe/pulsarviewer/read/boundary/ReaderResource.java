@@ -21,8 +21,9 @@ public class ReaderResource {
             @NotEmpty @QueryParam("topic") String topicName,
             @QueryParam("messageId") Optional<String> messageId,
             @QueryParam("jsonPathPredicate") Optional<String> jsonPathPredicate,
+            @QueryParam("key") Optional<String> key,
             @QueryParam("lastMins") Optional<Integer> lastMins
     ) {
-        return Response.ok(service.readStringMessage(topicName, messageId, jsonPathPredicate, lastMins)).build();
+        return Response.ok(service.readStringMessage(topicName, messageId, key, jsonPathPredicate, lastMins)).build();
     }
 }

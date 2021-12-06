@@ -21,13 +21,17 @@
 				</div>
 			</div>
 			<form class="row g-3 align-items-end" method="POST" id="events" name="events">
-				<div class="col-md-5">
+				<div class="col-md-4">
 				  <label for="topic-name" class="form-label">Topic name</label>
 				  <input type="text" class="form-control" id="topic-name" placeholder="persistent://public/default/my-topic" required>
 				</div>
-				<div class="col-md-4">
-				  <label for="json-path-predicate" class="form-label">JsonPath predicate</label>
-				  <input type="text" class="form-control" id="json-path-predicate" placeholder="$[?(@.type=='order-created')]">
+				<div class="col-md-2">
+					<label for="key" class="form-label">Key</label>
+					<input type="text" class="form-control" id="key" placeholder="msg-key">
+				</div>
+				<div class="col-md-3">
+					<label for="json-path-predicate" class="form-label">JsonPath predicate</label>
+					<input type="text" class="form-control" id="json-path-predicate" placeholder="$[?(@.type=='order-created')]">
 				</div>
 				<div class="col-md-1">
 				  <label for="message-id" class="form-label">MessageId</label>
@@ -51,11 +55,12 @@
 						      <th>Time</th>
 							  <th>Topic</th>
 							  <th>Producer</th>
+							  <th>Key</th>
 						      <th>Payload</th>
 						    </tr>
 						  </thead>
 						  <tbody id="tbody-events">
-							<tr><td colspan="4" style="text-align: center">No data loaded yet!</td></tr>
+							<tr><td colspan="5" style="text-align: center">No data loaded yet!</td></tr>
 						  </tbody>
 						</table>
 					</div>

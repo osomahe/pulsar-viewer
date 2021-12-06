@@ -5,18 +5,20 @@ $(document).ready(function () {
 		$("#btn-search").prop('disabled', true);
 		let data = getData();
 		localStorage.setItem("topicName", data.topic)
+		localStorage.setItem("key", data.key)
 		localStorage.setItem("jsonPathPredicate", data.jsonPathPredicate)
 		localStorage.setItem("messageId", data.messageId)
 		localStorage.setItem("lastMins", data.lastMins)
+		$('#tbody-events').html('<tr><td colspan="5" style="text-align: center">Loading...</td></tr>');
 		$.ajax({
 			type: "GET",
 			url: "/read",
 			data,
 		}).done(function (data) {
-			let html = data.length === 0 ? '<tr><td colspan="4" style="text-align: center">No data found!</td></tr>' : '';
+			let html = data.length === 0 ? '<tr><td colspan="5" style="text-align: center">No data found!</td></tr>' : '';
 			$.each(data, function (i, item){
 				fullData[item.messageId] = item;
-				html += '<tr onclick="showDetail(\'' + item.messageId + '\')"><td>' + item.messageId + '</td><td>' + moment(item.publishTime).format("yyyy-MM-DD HH:mm:ss") + '</td><td>' + item.topic + '</td><td>' + item.producer + '</td><td>' +  item.payload.substr(0, 96) + '</td></tr>';
+				html += '<tr><td>' + item.messageId + '</td><td>' + moment(item.publishTime).format("yyyy-MM-DD HH:mm:ss") + '</td><td>' + item.topic + '</td><td>' + item.producer + '</td><td>' + keyToString(item.key) + '</td><td onclick="showDetail(\'' + item.messageId + '\')">' +  item.payload.substr(0, 96) + '</td></tr>';
 			});
 			$('#tbody-events').html(html);
 			$("#btn-search").prop('disabled', false);
@@ -30,6 +32,10 @@ $(document).ready(function () {
 	let storageTopicName = localStorage.getItem("topicName");
 	if(storageTopicName && storageTopicName !== "undefined"){
 		$("#topic-name").val(storageTopicName);
+	}
+	let storageKey = localStorage.getItem("key");
+	if(storageKey && storageKey !== "undefined"){
+		$("#key").val(storageKey);
 	}
 	let storageJsonPathPredicate = localStorage.getItem("jsonPathPredicate");
 	if(storageJsonPathPredicate && storageJsonPathPredicate !== "undefined"){
@@ -53,6 +59,9 @@ function getData(){
 	if($("#json-path-predicate").val().length > 0 && $("#json-path-predicate").val() !== 'undefined'){
 		data["jsonPathPredicate"] = $("#json-path-predicate").val();
 	}
+	if($("#key").val().length > 0 && $("#key").val() !== 'undefined'){
+		data["key"] = $("#key").val();
+	}
 	if($("#last-mins").val().length > 0 && $("#last-mins").val() !== 'undefined'){
 		data["lastMins"] = $("#last-mins").val();
 	}
@@ -70,4 +79,11 @@ function showDetail(messageId){
 		$('#event-modal-body').html('<pre id="text">' + fullData[messageId].payload + '</pre>');
 	}
 	$('#event-modal').modal();
+}
+
+function keyToString(key){
+	if (key === undefined || key === null){
+		return '';
+	}
+	return key;
 }

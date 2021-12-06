@@ -19,7 +19,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class ReaderService {
@@ -35,7 +37,7 @@ public class ReaderService {
     @Inject
     TopicFacade facadeTopic;
 
-    public List<ReaderMessage> readStringMessage(String topicName, Optional<String> messageId, Optional<String> jsonPathPredicate, Optional<Integer> lastMins) {
+    public List<ReaderMessage> readStringMessage(String topicName, Optional<String> messageId, Optional<String> key, Optional<String> jsonPathPredicate, Optional<Integer> lastMins) {
         log.info(String.format("Reading messages from topic[%s], messageId[%s], jsonPredicate[%s], lastMins[%s]", topicName, messageId, jsonPathPredicate, lastMins));
         List<ReaderMessage> messages = new ArrayList<>();
         List<String> topics;
@@ -46,8 +48,12 @@ public class ReaderService {
         }
         log.info("Reading messages from " + topics.size() + " topics");
         Optional<Long> minTimeMillis = lastMins.isPresent() ? Optional.of(System.currentTimeMillis() - (lastMins.get() * 60 * 1_000)) : Optional.empty();
-        for (String topic : topics) {
-            messages.addAll(readSingleTopicMessages(topic, messageId, jsonPathPredicate, minTimeMillis));
+        var futures = topics.stream()
+                .map(topic -> CompletableFuture.supplyAsync(() -> readSingleTopicMessages(topic, messageId, key, jsonPathPredicate, minTimeMillis)))
+                .collect(Collectors.toList());
+
+        for (var future : futures) {
+            messages.addAll(future.join());
         }
 
         log.info("Reading messages complete");
@@ -56,14 +62,52 @@ public class ReaderService {
         return messages;
     }
 
-    private List<ReaderMessage> readSingleTopicMessages(String topicName, Optional<String> messageId, Optional<String> jsonPathPredicate, Optional<Long> minTimeMillis) {
+    private List<ReaderMessage> readSingleTopicMessages(String topicName, Optional<String> messageId, Optional<String> key, Optional<String> jsonPathPredicate, Optional<Long> minTimeMillis) {
         if (messageId.isPresent()) {
             return readSingleTopicMessages(topicName, messageId.get());
         }
-        return readSingleTopicMessages(topicName, jsonPathPredicate, minTimeMillis);
+        return readSingleTopicMessages(topicName, key, jsonPathPredicate, minTimeMillis);
     }
 
-    private List<ReaderMessage> readSingleTopicMessages(String topicName, Optional<String> jsonPathPredicate, Optional<Long> minTimeMillis) {
+    private List<ReaderMessage> readSingleTopicMessages(String topicName, Optional<String> key, Optional<String> jsonPathPredicate, Optional<Long> minTimeMillis) {
+        if (minTimeMillis.isEmpty()) {
+            return readSingleTopicMessagesSlow(topicName, key, jsonPathPredicate);
+        }
+        return readSingleTopicMessagesByTime(topicName, minTimeMillis.get()).stream()
+                .filter(msg -> key.isEmpty() || key.get().equals(msg.key))
+                .filter(msg -> jsonPathPredicate.isEmpty() || matchJsonPath(msg, jsonPathPredicate.get()))
+                .collect(Collectors.toList());
+    }
+
+    private boolean matchJsonPath(ReaderMessage msg, String jsonPathPredicate) {
+        List result = JsonPath.parse(msg.payload).read(jsonPathPredicate);
+        return result != null && result.size() > 0;
+    }
+
+    private List<ReaderMessage> readSingleTopicMessagesByTime(String topicName, Long minTimeMillis) {
+        try (Reader<byte[]> reader = pulsarClient.newReader()
+                .readerName(readerName)
+                .topic(topicName)
+                .startMessageId(MessageId.earliest)
+                .create()) {
+            List<ReaderMessage> messages = new ArrayList<>();
+            reader.seek(minTimeMillis);
+            while (reader.hasMessageAvailable()) {
+                var message = reader.readNext(1, TimeUnit.SECONDS);
+                if (message == null) {
+                    break;
+                }
+                if (message.getPublishTime() > minTimeMillis) {
+                    messages.add(new ReaderMessage(message));
+                }
+            }
+            return messages;
+        } catch (IOException e) {
+            throw new PulsarReaderException(topicName, e);
+        }
+    }
+
+    private List<ReaderMessage> readSingleTopicMessagesSlow(String topicName, Optional<String> key, Optional<String> jsonPathPredicate) {
         try (Reader<byte[]> reader = pulsarClient.newReader()
                 .readerName(readerName)
                 .topic(topicName)
@@ -76,13 +120,12 @@ public class ReaderService {
                     break;
                 }
                 var readerMessage = new ReaderMessage(message);
-                if (minTimeMillis.isPresent() && readerMessage.publishTime < minTimeMillis.get()) {
+                if (key.isPresent() && !key.get().equals(message.getKey())) {
                     continue;
                 }
                 if (jsonPathPredicate.isPresent()) {
                     try {
-                        List result = JsonPath.parse(readerMessage.payload).read(jsonPathPredicate.get());
-                        if (result.size() > 0) {
+                        if (matchJsonPath(readerMessage, jsonPathPredicate.get())) {
                             messages.add(readerMessage);
                         }
                     } catch (Exception e) {

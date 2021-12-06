@@ -1,5 +1,9 @@
 # Releases
 
+## 0.3.0 (2021-12-06)
+* filtering by message key
+* improved performance when filtered by time
+
 ## 0.2.1 (2021-10-22)
 * fix logging when using pulsar admin
 

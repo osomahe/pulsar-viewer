@@ -10,6 +10,7 @@ public class ReaderMessage implements Comparable<ReaderMessage> {
     public final String topic;
     public final long publishTime;
     public final String producer;
+    public final String key;
     public final String payload;
 
     public ReaderMessage(Message<byte[]> message) {
@@ -17,6 +18,7 @@ public class ReaderMessage implements Comparable<ReaderMessage> {
         publishTime = message.getPublishTime();
         producer = message.getProducerName();
         topic = message.getTopicName();
+        key = message.getKey();
         payload = new String(message.getValue(), StandardCharsets.UTF_8);
     }
 
