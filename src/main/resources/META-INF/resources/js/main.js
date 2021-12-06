@@ -88,7 +88,6 @@ function keyToString(key){
 	return key;
 }
 $(document).ready(function () {
-	$('#version').html('<tr><td colspan="5" style="text-align: center">Loading...</td></tr>');
 	$.ajax({
 		type: "GET",
 		url: "/info",
