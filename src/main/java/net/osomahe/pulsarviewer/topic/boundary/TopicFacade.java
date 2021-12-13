@@ -16,10 +16,18 @@ public class TopicFacade {
     @Inject
     PulsarAdmin pulsarAdmin;
 
-    public List<String> getTopics(String pattern) {
-        if (pattern == null || !pattern.endsWith("*")) {
-            return Collections.singletonList(pattern);
+    public List<String> getTopics(String topicName) {
+        if (topicName.endsWith("*")) {
+            return getTopicsWithStarPattern(topicName);
         }
+        var topicsPartitioned = getTopicsWithStarPattern(topicName + "-partition-*");
+        if (topicsPartitioned.size() > 0) {
+            return topicsPartitioned;
+        }
+        return Collections.singletonList(topicName);
+    }
+
+    private List<String> getTopicsWithStarPattern(String pattern) {
         String namespace = getNamespace(pattern);
         String topicPrefix = pattern.substring(0, pattern.length() - 1).toLowerCase();
         try {

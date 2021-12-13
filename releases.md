@@ -1,5 +1,10 @@
 # Releases
 
+## 1.0.0 (2021-12-13)
+* filtering with from and to
+* version displayed in ui
+* fix json path filtering with non json data in topic
+
 ## 0.3.0 (2021-12-06)
 * filtering by message key
 * improved performance when filtered by time

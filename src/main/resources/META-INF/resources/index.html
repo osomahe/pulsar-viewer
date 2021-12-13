@@ -1,96 +1,111 @@
 <!doctype html>
 <html lang="en">
-  <head>
-  	<title>Apache Pulsar Viewer</title>
+<head>
+    <title>Apache Pulsar Viewer</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-	<link href='https://fonts.googleapis.com/css?family=Roboto:400,100,300,700' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Roboto:400,100,300,700' rel='stylesheet' type='text/css'>
 
-	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
 
-	<link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<section class="ftco-section">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6 text-center mb-5">
+                <h2 class="heading-section">Apache Pulsar Viewer</h2>
+                <small id="version"></small>
+            </div>
+        </div>
+        <form method="POST" id="events" name="events">
+            <hr />
+            <div class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label for="topic-name" class="form-label">Topic name</label>
+                    <input type="text" class="form-control" id="topic-name"
+                           placeholder="persistent://public/default/my-topic" required>
+                </div>
+                <div class="col-md-4">
+                    <label for="from" class="form-label">From</label>
+                    <input type="text" class="form-control" id="from" placeholder="YYYY-MM-DD HH:mm:ss" pattern="(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})">
+                </div>
+                <div class="col-md-4">
+                    <label for="to" class="form-label">To</label>
+                    <input type="text" class="form-control" id="to" placeholder="YYYY-MM-DD HH:mm:ss" pattern="(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})">
+                </div>
+            </div>
+            <hr />
+            <div class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label for="key" class="form-label">Key</label>
+                    <input type="text" class="form-control" id="key" placeholder="msg-key">
+                </div>
+                <div class="col-md-4">
+                    <label for="json-path-predicate" class="form-label">JsonPath predicate</label>
+                    <input type="text" class="form-control" id="json-path-predicate"
+                           placeholder="$[?(@.type=='order-created')]">
+                </div>
+                <div class="col-md-3">
+                    <label for="message-id" class="form-label">MessageId</label>
+                    <input type="text" class="form-control" id="message-id" placeholder="6:2:-1:0">
+                </div>
+                <div class="col-md-1">
+                    <button type="submit" class="btn btn-primary" id="btn-search">Search</button>
+                </div>
+            </div>
+            <hr />
+        </form>
+        <div class="row mt-3">
+            <div class="col-md-12">
+                <div class="table-wrap" id="table-events">
+                    <table class="table">
+                        <thead class="thead-primary">
+                        <tr>
+                            <th>MessageId</th>
+                            <th>Time</th>
+                            <th>Topic</th>
+                            <th>Producer</th>
+                            <th>Key</th>
+                            <th>Payload</th>
+                        </tr>
+                        </thead>
+                        <tbody id="tbody-events">
+                        <tr>
+                            <td colspan="5" style="text-align: center">No data loaded yet!</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- Modal -->
+<div class="modal fade" id="event-modal" tabindex="-1" role="dialog" aria-labelledby="event-modal-label"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="event-modal-label"></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="event-modal-body">
+            </div>
+        </div>
+    </div>
+</div>
 
-	</head>
-	<body>
-	<section class="ftco-section">
-		<div class="container">
-			<div class="row justify-content-center">
-				<div class="col-md-6 text-center mb-5">
-					<h2 class="heading-section">Apache Pulsar Viewer</h2>
-					<small id="version"></small>
-				</div>
-			</div>
-			<form class="row g-3 align-items-end" method="POST" id="events" name="events">
-				<div class="col-md-4">
-				  <label for="topic-name" class="form-label">Topic name</label>
-				  <input type="text" class="form-control" id="topic-name" placeholder="persistent://public/default/my-topic" required>
-				</div>
-				<div class="col-md-2">
-					<label for="key" class="form-label">Key</label>
-					<input type="text" class="form-control" id="key" placeholder="msg-key">
-				</div>
-				<div class="col-md-3">
-					<label for="json-path-predicate" class="form-label">JsonPath predicate</label>
-					<input type="text" class="form-control" id="json-path-predicate" placeholder="$[?(@.type=='order-created')]">
-				</div>
-				<div class="col-md-1">
-				  <label for="message-id" class="form-label">MessageId</label>
-				  <input type="text" class="form-control" id="message-id" placeholder="6:2:-1:0">
-				</div>
-				<div class="col-md-1">
-				  <label for="message-id" class="form-label">Last(mins)</label>
-				  <input type="text" class="form-control" id="last-mins" placeholder="30">
-				</div>
-				<div class="col-md-1 mt-3">
-					<button type="submit" class="btn btn-primary" id="btn-search">Search</button>
-				  </div>
-			</form>
-			<div class="row mt-3">
-				<div class="col-md-12">
-					<div class="table-wrap" id="table-events">
-						<table class="table">
-						  <thead class="thead-primary">
-						    <tr>
-						      <th>MessageId</th>
-						      <th>Time</th>
-							  <th>Topic</th>
-							  <th>Producer</th>
-							  <th>Key</th>
-						      <th>Payload</th>
-						    </tr>
-						  </thead>
-						  <tbody id="tbody-events">
-							<tr><td colspan="5" style="text-align: center">No data loaded yet!</td></tr>
-						  </tbody>
-						</table>
-					</div>
-				</div>
-			</div>
-		</div>
-	</section>
-	<!-- Modal -->
-	<div class="modal fade" id="event-modal" tabindex="-1" role="dialog" aria-labelledby="event-modal-label" aria-hidden="true">
-		<div class="modal-dialog modal-dialog-centered modal-lg" role="document">
-			<div class="modal-content">
-				<div class="modal-header">
-					<h5 class="modal-title" id="event-modal-label"></h5>
-					<button type="button" class="close" data-dismiss="modal" aria-label="Close">
-						<span aria-hidden="true">&times;</span>
-					</button>
-				</div>
-				<div class="modal-body" id="event-modal-body">
-				</div>
-			</div>
-		</div>
-	</div>
+<script src="js/moment.min.js"></script>
+<script src="js/jquery.min.js"></script>
+<script src="js/popper.js"></script>
+<script src="js/bootstrap.min.js"></script>
+<script src="js/main.js"></script>
 
-	<script src="js/moment.min.js"></script>
-	<script src="js/jquery.min.js"></script>
-	<script src="js/popper.js"></script>
-	<script src="js/bootstrap.min.js"></script>
-	<script src="js/main.js"></script>
-
-	</body>
+</body>
 </html>
 
