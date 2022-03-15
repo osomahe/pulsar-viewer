@@ -1,0 +1,44 @@
+name: Docker build
+
+on:
+  push:
+    tags:
+      - '*'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push-image:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      DIGEST: ${{ steps.build-and-push.outputs.digest }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+
+      - name: Sets env vars for release
+        run: echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        id: build-and-push
+        env:
+          IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
+          IMAGE_LATEST: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+        run: |
+          docker build -f Dockerfile -t ${{ env.IMAGE }} .
+          docker tag ${{ env.IMAGE }} ${{ env.IMAGE_LATEST }}
+          docker push ${{ env.IMAGE }}
+          docker push ${{ env.IMAGE_LATEST }}
