@@ -24,7 +24,7 @@ Environment variables:
 
 Examples:
 ```bash
-docker run -d --name pulsar-viewer -p 8080:8080 -e PULSAR_SERVICE_URL="pulsar://pulsarhostname:6650" osomahe/pulsar-viewer
+docker run -d --name pulsar-viewer -p 8080:8080 -e PULSAR_SERVICE_URL="pulsar://pulsarhostname:6650" ghcr.io/osomahe/pulsar-viewer
 ```
 
 ### Health checks
@@ -52,10 +52,4 @@ Start Pulsar Source App to create some test messages.
 ```bash
 docker run -d --rm --name source-app --net hpt -p 8082:8080 \
 -e PULSAR_SERVICE_URL=pulsar://pulsar:6650 osomahe/pulsar-source-app:0.4.0
-```
-
-Manual build of Docker image, because Docker Hub stop allowing automated build for public projects.
-```bash
-docker build -t osomahe/pulsar-viewer:1.0.0 .
-docker push osomahe/pulsar-viewer:1.0.0
 ```

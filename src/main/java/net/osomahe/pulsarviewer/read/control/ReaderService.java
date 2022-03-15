@@ -134,7 +134,7 @@ public class ReaderService {
     private Optional<MessageId> getMessageId(String messageId) {
         try {
             String[] parts = messageId.split(":");
-            return Optional.ofNullable(DefaultImplementation.newMessageId(
+            return Optional.ofNullable(DefaultImplementation.getDefaultImplementation().newMessageId(
                     Long.parseLong(parts[0]), Long.parseLong(parts[1]), Integer.parseInt(parts[2])));
         } catch (Exception e) {
             log.error("Cannot parse message ID: " + messageId, e);

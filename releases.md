@@ -1,5 +1,8 @@
 # Releases
 
+## 1.0.1 (2022-02-15)
+* quarkus version upgrade
+
 ## 1.0.0 (2021-12-13)
 * filtering with from and to
 * version displayed in ui
