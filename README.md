@@ -20,7 +20,7 @@ Environment variables:
 * PULSAR_ADMIN_TLS_CERT_FILE - not set by default, path for admin certificate for TLS authorization `/pulsar/certs/admin.cert.pem`
 * PULSAR_ADMIN_TLS_KEY_FILE - not set by default, path for admin key to certificate for TLS authorization `/pulsar/certs/admin.key-pk8.pem`
 * PULSAR_DEFAULT_READER - default "pulsar-viewer" name used for reader name
-* PULSAR_HEALTH_TOPIC - default "persistent://public/default/health-check" topic used for health checking of readiness probe
+* PULSAR_HEALTH_TOPIC - default "non-persistent://public/default/health-check" topic used for health checking of readiness probe
 
 Examples:
 ```bash
