@@ -1,5 +1,10 @@
 # Releases
 
+## 2.0.0 (2022-04-09)
+* view message count
+* maximum loaded messages from pulsar
+* from field default value hour before to
+
 ## 1.0.1 (2022-02-15)
 * quarkus version upgrade
 

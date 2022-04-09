@@ -21,6 +21,8 @@ Environment variables:
 * PULSAR_ADMIN_TLS_KEY_FILE - not set by default, path for admin key to certificate for TLS authorization `/pulsar/certs/admin.key-pk8.pem`
 * PULSAR_DEFAULT_READER - default "pulsar-viewer" name used for reader name
 * PULSAR_HEALTH_TOPIC - default "non-persistent://public/default/health-check" topic used for health checking of readiness probe
+* PULSAR_MAX_MESSAGES - Maximum number of messages read from pulsar to handle single request
+* PULSAR_DEFAULT_MAX_MESSAGE_AGE_SECONDS - When "from" is not specified. Reader will look for messages no older than by default 3600s
 
 Examples:
 ```bash

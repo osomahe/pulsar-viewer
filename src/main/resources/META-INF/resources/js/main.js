@@ -16,12 +16,17 @@ $(document).ready(function () {
 			url: "/read",
 			data,
 		}).done(function (data) {
-			let html = data.length === 0 ? '<tr><td colspan="5" style="text-align: center">No data found!</td></tr>' : '';
-			$.each(data, function (i, item){
+			let html = data.messages.length === 0 ? '<tr><td colspan="6" style="text-align: center">No data found!</td></tr>' : '';
+			$.each(data.messages, function (i, item){
 				fullData[item.messageId] = item;
-				html += '<tr><td>' + item.messageId + '</td><td>' + moment(item.publishTime).format("yyyy-MM-DD HH:mm:ss") + '</td><td>' + item.topic + '</td><td>' + item.producer + '</td><td>' + keyToString(item.key) + '</td><td onclick="showDetail(\'' + item.messageId + '\')">' +  item.payload.substr(0, 96) + '</td></tr>';
+				html += '<tr><td>' + (i + 1) + '</td><td>' + item.messageId + '</td><td>' + moment(item.publishTime).format("yyyy-MM-DD HH:mm:ss") + '</td><td>' + item.topic + '</td><td>' + item.producer + '</td><td>' + keyToString(item.key) + '</td><td onclick="showDetail(\'' + item.messageId + '\')">' +  item.payload.substr(0, 96) + '</td></tr>';
 			});
 			$('#tbody-events').html(html);
+			if(data.errorMessage) {
+				$('#msg-info').html('Total messages: ' + data.messages.length + '&nbsp;&nbsp;&nbsp;' + data.errorMessage);
+			} else {
+				$('#msg-info').html('Total messages: ' + data.messages.length);
+			}
 			$("#btn-search").prop('disabled', false);
 		}).fail(function (data) {
 			alert(JSON.stringify(data.responseJSON, null, 2));
@@ -46,13 +51,18 @@ $(document).ready(function () {
 	if(storageMessageId && storageMessageId !== "undefined"){
 		$("#message-id").val(storageMessageId);
 	}
+
 	let from = localStorage.getItem("from");
 	if(from && from !== "undefined"){
 		$("#from").val(moment.unix(from).format(momentFormat));
+	}else{
+		$("#from").val(moment().subtract(1, 'hour').format(momentFormat));
 	}
 	let to = localStorage.getItem("to");
 	if(to && to !== "undefined"){
 		$("#to").val(moment.unix(to).format(momentFormat));
+	}else{
+		$('#to').attr("placeholder", moment().format(momentFormat));
 	}
 });
 
@@ -104,6 +114,4 @@ $(document).ready(function () {
 	}).fail(function (data) {
 		$('#version').html("unknown");
 	});
-
-	$('#to').attr("placeholder", moment().format(momentFormat));
 });

@@ -1,6 +1,7 @@
 package net.osomahe.pulsarviewer.read.boundary;
 
 import net.osomahe.pulsarviewer.read.control.ReaderService;
+import net.osomahe.pulsarviewer.read.entity.ReaderFilter;
 
 import javax.inject.Inject;
 import javax.validation.constraints.NotEmpty;
@@ -8,7 +9,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
-import java.util.Optional;
+
 
 @Path("/read")
 public class ReaderResource {
@@ -19,12 +20,21 @@ public class ReaderResource {
     @GET
     public Response readMessages(
             @NotEmpty @QueryParam("topic") String topicName,
-            @QueryParam("messageId") Optional<String> messageId,
-            @QueryParam("jsonPathPredicate") Optional<String> jsonPathPredicate,
-            @QueryParam("key") Optional<String> key,
-            @QueryParam("from") Optional<Long> fromEpochSecs,
-            @QueryParam("to") Optional<Long> toEpochSecs
+            @QueryParam("messageId") String messageId,
+            @QueryParam("jsonPathPredicate") String jsonPathPredicate,
+            @QueryParam("key") String key,
+            @QueryParam("from") Long fromEpochSecs,
+            @QueryParam("to") Long toEpochSecs
     ) {
-        return Response.ok(service.readStringMessage(topicName, messageId, key, jsonPathPredicate, fromEpochSecs, toEpochSecs)).build();
+
+        ReaderFilter filter = ReaderFilter.builder()
+                .withTopicName(topicName)
+                .withMessageId(messageId)
+                .withJsonPathPredicate(jsonPathPredicate)
+                .withKey(key)
+                .withFromEpochSecs(fromEpochSecs)
+                .withToEpochSecs(toEpochSecs)
+                .build();
+        return Response.ok(service.readStringMessage(filter)).build();
     }
 }

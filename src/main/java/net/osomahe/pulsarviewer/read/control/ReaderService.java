@@ -2,6 +2,8 @@ package net.osomahe.pulsarviewer.read.control;
 
 import com.jayway.jsonpath.JsonPath;
 import net.osomahe.pulsarviewer.read.entity.PulsarReaderException;
+import net.osomahe.pulsarviewer.read.entity.ReaderFilter;
+import net.osomahe.pulsarviewer.read.entity.ReaderInfo;
 import net.osomahe.pulsarviewer.read.entity.ReaderMessage;
 import net.osomahe.pulsarviewer.topic.boundary.TopicFacade;
 import org.apache.pulsar.client.api.Message;
@@ -22,7 +24,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
+
 
 @ApplicationScoped
 public class ReaderService {
@@ -32,19 +36,26 @@ public class ReaderService {
     @ConfigProperty(name = "pulsar.default.reader")
     String readerName;
 
+    @ConfigProperty(name = "pulsar.max-messages")
+    Long maxMessages;
+
+    @ConfigProperty(name = "pulsar.default-max-message-age-seconds")
+    Long defaultMaxMessageAgeSeconds;
+
     @Inject
     PulsarClient pulsarClient;
 
     @Inject
     TopicFacade facadeTopic;
 
-    public List<ReaderMessage> readStringMessage(String topicName, Optional<String> messageId, Optional<String> key, Optional<String> jsonPathPredicate, Optional<Long> fromEpochSecs, Optional<Long> toEpochSecs) {
-        log.infof("Reading messages from topic[%s], messageId[%s], jsonPredicate[%s], fromEpochSecs[%s], toEpochSecs[%s]", topicName, messageId, jsonPathPredicate, fromEpochSecs, toEpochSecs);
+    public ReaderInfo readStringMessage(ReaderFilter readerFilter) {
+        log.infof("Reading messages by filter: %s", readerFilter);
         List<ReaderMessage> messages = new ArrayList<>();
-        List<String> topics = facadeTopic.getTopics(topicName);
+        List<String> topics = facadeTopic.getTopics(readerFilter.getTopicName());
         log.info("Reading messages from " + topics.size() + " topics");
+        AtomicLong msgCount = new AtomicLong(0);
         var futures = topics.stream()
-                .map(topic -> CompletableFuture.supplyAsync(() -> readSingleTopicMessages(topic, messageId, key, jsonPathPredicate, fromEpochSecs, toEpochSecs)))
+                .map(topic -> CompletableFuture.supplyAsync(() -> readSingleTopicMessages(topic, readerFilter, msgCount)))
                 .collect(Collectors.toList());
 
         for (var future : futures) {
@@ -54,20 +65,27 @@ public class ReaderService {
         log.info("Reading messages complete");
         Collections.sort(messages);
         Collections.reverse(messages);
-        return messages;
-    }
 
-    private List<ReaderMessage> readSingleTopicMessages(String topicName, Optional<String> messageId, Optional<String> key, Optional<String> jsonPathPredicate, Optional<Long> fromEpochSecs, Optional<Long> toEpochSecs) {
-        if (messageId.isPresent()) {
-            return readSingleMessage(topicName, messageId.get());
+        if (msgCount.longValue() >= maxMessages.longValue()) {
+            return new ReaderInfo(
+                    messages,
+                    String.format("Error! Maximum number of messages loaded [%s] from Pulsar was exceeded. Limit the results by time please.", maxMessages)
+            );
         }
-        return readSingleTopicMessages(topicName, key, jsonPathPredicate, fromEpochSecs, toEpochSecs);
+        return new ReaderInfo(messages);
     }
 
-    private List<ReaderMessage> readSingleTopicMessages(String topicName, Optional<String> key, Optional<String> jsonPathPredicate, Optional<Long> fromEpochSecs, Optional<Long> toEpochSecs) {
-        return readSingleTopicMessagesByTime(topicName, fromEpochSecs, toEpochSecs.orElse(Instant.now().getEpochSecond())).stream()
-                .filter(msg -> key.isEmpty() || key.get().equals(msg.key))
-                .filter(msg -> jsonPathPredicate.isEmpty() || matchJsonPath(msg, jsonPathPredicate.get()))
+    private List<ReaderMessage> readSingleTopicMessages(String topicName, ReaderFilter readerFilter, AtomicLong msgCount) {
+        if (readerFilter.getMessageId() != null) {
+            return readSingleMessage(topicName, readerFilter.getMessageId());
+        }
+        return readSingleTopicFilteredMessages(topicName, readerFilter, msgCount);
+    }
+
+    private List<ReaderMessage> readSingleTopicFilteredMessages(String topicName, ReaderFilter filter, AtomicLong msgCount) {
+        return readSingleTopicMessagesByTime(topicName, filter, msgCount).stream()
+                .filter(msg -> filter.getKey() == null || filter.getKey().equals(msg.key))
+                .filter(msg -> filter.getJsonPathPredicate() == null || matchJsonPath(msg, filter.getJsonPathPredicate()))
                 .collect(Collectors.toList());
     }
 
@@ -81,18 +99,25 @@ public class ReaderService {
         return false;
     }
 
-    private List<ReaderMessage> readSingleTopicMessagesByTime(String topicName, Optional<Long> fromEpochSecs, Long toEpochSecs) {
+    private List<ReaderMessage> readSingleTopicMessagesByTime(String topicName, ReaderFilter filter, AtomicLong msgCount) {
+        Long toEpochSecs = filter.getToEpochSecs() != null ? filter.getToEpochSecs() : Instant.now().getEpochSecond();
+        Long fromEpochSecs = filter.getFromEpochSecs() != null ? filter.getFromEpochSecs() : toEpochSecs - defaultMaxMessageAgeSeconds;
+
         try (Reader<byte[]> reader = pulsarClient.newReader()
                 .readerName(readerName)
                 .topic(topicName)
                 .startMessageId(MessageId.earliest)
                 .create()) {
             List<ReaderMessage> messages = new ArrayList<>();
-            if (fromEpochSecs.isPresent()) {
-                reader.seek(fromEpochSecs.get() * 1_000);
-            }
+
+            reader.seek(fromEpochSecs * 1_000);
+
             long toEpochMillis = toEpochSecs * 1_000;
             while (reader.hasMessageAvailable()) {
+                if (msgCount.incrementAndGet() > maxMessages) {
+                    log.infof("Stopping reading topic %s. Too much messages already read from Pulsar by filter %s.", topicName, filter);
+                    break;
+                }
                 var message = reader.readNext(1, TimeUnit.SECONDS);
                 if (message == null) {
                     break;

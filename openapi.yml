@@ -2,47 +2,70 @@
 openapi: 3.0.3
 info:
   title: Pulsar Viewer
-  version: "1.0"
+  version: 2.0.0
 paths:
   /read:
     get:
+      tags:
+        - Reader Resource
       parameters:
       - name: topic
         in: query
+        required: true
         description: Topic name which messages are requested e.g. persistent://public/default/my-topic
         schema:
           minLength: 1
           type: string
           nullable: false
+      - name: from
+        in: query
+        required: false
+        description: Filtering messages which should be newer than epoch seconds of this "from" field. This field is not required but highly recommended.
+        schema:
+          format: int64
+          type: integer
+      - name: to
+        in: query
+        required: false
+        description: Filtering messages which should be older than epoch seconds of this "to" field.
+        schema:
+          format: int64
+          type: integer
       - name: jsonPathPredicate
         in: query
         required: false
         description: JsonPath predicate to filter messages e.g. $[?(@.type=='order-created')]
         schema:
           type: string
-      - name: messageId
+      - name: key
         in: query
         required: false
-        description: Used for selecting single Message by its ID.
+        description: Filtering by key of the message.
         schema:
           type: string
-      - name: lastMins
+      - name: messageId
         in: query
-        required: false
-        description: Used for filtering messegaed published in x last minutes.
         schema:
-          type: integer
+          type: string
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ReaderMessage'
+                $ref: '#/components/schemas/ReaderInfo'
 components:
   schemas:
+    ReaderInfo:
+      type: object
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReaderMessage'
+        errorMessage:
+          type: string
+          description: Error message for a user
     ReaderMessage:
       type: object
       properties:
@@ -62,3 +85,7 @@ components:
           format: int64
           type: integer
           description: epoch milliseconds
+        key:
+          type: string
+          description: Message key
+
